@@ -97,6 +97,13 @@ const server = http.createServer(async function (req, res) {
       if (route === '/api/analyze' || route === '/api/build') {
         var wantsBuild = body.action === 'build' || route === '/api/build';
 
+        if (body.action === 'code') {
+          if (!body.title || !body.approach) {
+            return json(res, 400, { error: 'Missing title or approach.', code: 'bad_request' });
+          }
+          return json(res, 200, await getClaude().buildCode(String(body.title), body.approach));
+        }
+
         if (wantsBuild) {
           if (!body.title || !body.approach) {
             return json(res, 400, { error: 'Missing title or approach.', code: 'bad_request' });
@@ -154,8 +161,16 @@ const server = http.createServer(async function (req, res) {
 server.listen(PORT, function () {
   const keyed = !!process.env.ANTHROPIC_API_KEY;
   console.log('Stepwise running at http://localhost:' + PORT);
-  console.log(keyed
-    ? '  Problem generation: ON (model ' + (process.env.STEPWISE_MODEL || 'claude-opus-5') + ')'
-    : '  Problem generation: OFF — export ANTHROPIC_API_KEY to enable it.');
+  if (!keyed) {
+    console.log('  Problem generation: OFF — export ANTHROPIC_API_KEY to enable it.');
+  } else {
+    const c = getClaude();
+    console.log('  Problem generation: ON');
+    console.log('    analyse → ' + c.MODELS.analyze);
+    console.log('    trace   → ' + c.MODELS.build + '   (the hard one)');
+    console.log('    C++     → ' + c.MODELS.code);
+    const s = c.cacheStats();
+    console.log('  Response cache: ' + (s.enabled ? s.onDisk + ' cached — repeats are free' : 'DISABLED'));
+  }
   console.log('  Saved problems: ' + readLibrary().length + ' in data/generated.json');
 });

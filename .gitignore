@@ -13,3 +13,6 @@ npm-debug.log*
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Cached API responses — repeats are free, but do not commit them.
+.cache/

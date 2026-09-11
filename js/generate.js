@@ -82,7 +82,6 @@
               var verified = got.replace(/\s/g, '') === want.replace(/\s/g, '');
               return {
                 code: out.code,
-                cpp: out.cpp || '',
                 expected: want,
                 example: out.example || '',
                 frames: res.frames,
@@ -100,6 +99,24 @@
               e3.code = 'run_failed';
               throw e3;
             });
+        });
+    },
+
+    /**
+     * The C++ for an approach. Deliberately a SEPARATE call from buildOne:
+     * the trace gates the whole screen, the code does not, so the code is
+     * fetched in the background once the walkthrough is already visible.
+     */
+    fetchCode: function (title, approach) {
+      return post({ action: 'code', title: title, approach: approach })
+        .then(function (out) {
+          var cpp = out && typeof out.cpp === 'string' ? out.cpp.trim() : '';
+          if (!cpp) {
+            var e = new Error('No code came back.');
+            e.code = 'bad_json';
+            throw e;
+          }
+          return cpp;
         });
     },
 
