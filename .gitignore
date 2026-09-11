@@ -1,0 +1,15 @@
+node_modules/
+
+# Secrets — never commit. .env.example is the safe, committed template.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+.DS_Store
+.vercel
+npm-debug.log*
+.idea/
+.vscode/*
+!.vscode/extensions.json
