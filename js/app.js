@@ -387,6 +387,7 @@
       mountPending(ap, 'Re-running the saved code…');
       return Generate.replay(ap).then(function (r) {
         mountViz(ap, r.frames, r.answer, r.verified);
+        ensureCode(problem, ap);        // fills in if a past session never got it
       }).catch(function (err) {
         slot.innerHTML = '';
         slot.appendChild(el('p', 'empty',
@@ -398,9 +399,10 @@
     mountPending(ap, 'Writing the code, then running it to check the answer…');
 
     Generate.buildOne(problem.title, ap).then(function (r) {
-      ap.code = r.code; ap.expected = r.expected; ap.example = r.example; ap.cpp = r.cpp;
+      ap.code = r.code; ap.expected = r.expected; ap.example = r.example;
       persistApproach(problem, ap);
       mountViz(ap, r.frames, r.answer, r.verified);
+      ensureCode(problem, ap);          // C++ arrives behind the walkthrough
     }).catch(function (err) {
       slot.innerHTML = '';
       var p2 = el('div', 'buildfail');
@@ -409,6 +411,35 @@
       retry.onclick = function () { openApproach(problem, ap); };
       p2.appendChild(retry);
       slot.appendChild(p2);
+    });
+  }
+
+  /**
+   * Fetch the C++ for a generated approach in the background and slot it in.
+   * The walkthrough is already on screen by the time this runs, and most people
+   * reach the last step after it has landed — so the code is usually just there.
+   */
+  function ensureCode(problem, ap) {
+    if (ap.cpp || !problem.generated || ap.codePending) return;
+    ap.codePending = true;
+    Generate.fetchCode(problem.title, ap).then(function (cpp) {
+      ap.cpp = cpp;
+      ap.codePending = false;
+      persistApproach(problem, ap);
+      // Only touch the DOM if this approach is still the one on screen.
+      if (state && state.ap === ap) {
+        var el2 = document.getElementById('cppCode');
+        if (el2) el2.textContent = cpp;
+        var panel = document.getElementById('stageCode');
+        if (panel) panel.classList.remove('is-waiting');
+        paint();
+      }
+    }).catch(function () {
+      ap.codePending = false;
+      if (state && state.ap === ap) {
+        var w = document.getElementById('codeWait');
+        if (w) w.textContent = 'The C++ could not be generated. Reopen this approach to retry.';
+      }
     });
   }
 
@@ -551,6 +582,7 @@
               '<button class="code-copy" id="copyBtn">Copy</button>' +
             '</div>' +
             '<pre class="code"><code id="cppCode"></code></pre>' +
+            '<p class="code-wait" id="codeWait"><span class="spin"></span>Writing the C++…</p>' +
             '<p class="code-foot">Now that you have seen it run, this should read as something you could have written. ' +
               '<button class="linkish" id="rewatchBtn">↻ Watch it again</button></p>' +
           '</div>' +
@@ -748,9 +780,11 @@
     var viz = document.getElementById('stageViz');
     var codePanel = document.getElementById('stageCode');
     if (viz && codePanel) {
-      var showCode = last && !!state.ap.cpp;
+      var hasCode = !!state.ap.cpp;
+      var showCode = last && (hasCode || state.ap.codePending);
       viz.hidden = showCode;
       codePanel.hidden = !showCode;
+      codePanel.classList.toggle('is-waiting', showCode && !hasCode);
     }
   }
 

@@ -365,6 +365,12 @@ svg.cv{ display:block; height:auto; max-width:100%; }
 }
 .code code{ font-family:"JetBrains Mono", monospace; font-size:14px; line-height:1.75; color:var(--ink); white-space:pre; }
 .code-foot{ flex:0 0 auto; margin:10px 0 0; font-size:12.5px; color:var(--ink-faint); text-align:center; }
+/* While the C++ is still being written, the panel shows the waiting line
+   instead of an empty code block. */
+.code-wait{ display:none; flex:0 0 auto; align-items:center; justify-content:center; gap:9px; margin:10px 0 0; font-size:13px; color:var(--ink-soft); }
+.stage-code.is-waiting .code{ display:none; }
+.stage-code.is-waiting .code-copy{ display:none; }
+.stage-code.is-waiting .code-wait{ display:flex; flex:1; }
 .linkish{ background:none; border:none; color:var(--solid); font-family:"Figtree", sans-serif; font-size:12.5px; font-weight:700; cursor:pointer; padding:0 2px; }
 .linkish:hover{ text-decoration:underline; text-underline-offset:3px; }
 .result-k{ font-family:"JetBrains Mono", monospace; font-size:9.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--solid); font-weight:700; }

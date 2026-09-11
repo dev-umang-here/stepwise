@@ -14,7 +14,7 @@
 */
 'use strict';
 
-const { analyze, build } = require('../lib/claude.js');
+const { analyze, build, buildCode } = require('../lib/claude.js');
 
 module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') {
@@ -33,6 +33,13 @@ module.exports = async function handler(req, res) {
 
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+
+    if (body.action === 'code') {
+      if (!body.title || !body.approach) {
+        return res.status(400).json({ error: 'Missing title or approach.', code: 'bad_request' });
+      }
+      return res.status(200).json(await buildCode(String(body.title), body.approach));
+    }
 
     if (body.action === 'build') {
       if (!body.title || !body.approach) {
